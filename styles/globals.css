@@ -14,3 +14,16 @@ a {
 * {
   box-sizing: border-box;
 }
+
+.cornerButton {
+  position: fixed;
+  top: 10px;
+}
+
+.cornerButton.left {
+  left: 10px;
+}
+
+.cornerButton.right {
+  right: 10px;
+}

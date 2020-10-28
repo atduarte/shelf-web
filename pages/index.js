@@ -1,61 +1,99 @@
 import { useEffect } from 'react';
-
 import Head from 'next/head'
 import styles from '../styles/Home.module.css'
-import {itemsCollection} from '../lib/data/items'
+import {extractHostname} from '../lib/utils'
+
+import {itemsCollection, incrementItemPoints, deleteItem} from '../lib/data/items'
 
 import { connect } from 'react-redux';
+import { Item, Container, Button } from 'semantic-ui-react';
 
-const Feed = ({ items }) => {
+const Feed = ({ items, subjects }) => {
   if (!items) return <h3>Loading...</h3>;
 
-  return <div className={styles.grid}>
-    {items.docs.map(doc => <FeedItem key={doc.id} doc={doc} />)}
-  </div>
+  return (
+    <Item.Group>
+      {items.docs.map(doc => <FeedItem key={doc.id} doc={doc} subjects={subjects} />)}
+    </Item.Group>
+  )
 }
 
-const FeedItem = ({ doc }) => {
+const FeedItem = ({ doc, subjects }) => {
   const data = doc.data();
-  return <a href={data.href} className={styles.card}>
-    <h3>{data.url}</h3>
-  </a>;
+  const processedSubjects = (subjects || {docs: []}).docs.filter((doc) => data.subjects.map(s => s.id).includes(doc.id));
+
+  return (
+    <div className={styles.item} dbid={doc.id}>
+      <div className={styles.itemIncrements}>
+        <div className={styles.invertedArrow} onClick={handleIncrement(doc.id, 1)}></div>
+        <div className={styles.points}>{data.points}</div>
+        <div className={styles.arrow}  onClick={handleIncrement(doc.id, -1)}></div>
+      </div>
+      <div className={styles.itemContent}>
+        <div className={styles.itemHeader}>
+          <a href={data.url}>{data.title}</a>
+          <img className={styles.trash} src="/trash.svg" onClick={handleDelete(doc.id)} />
+        </div>
+        <div className={styles.itemMeta}>
+          {processedSubjects.map(doc => <div className={styles.itemSubject}>{doc.data().name}</div>)}
+          {extractHostname(data.url)} — <a target="_blank" href={`https://console.firebase.google.com/u/0/project/andreduarte-shelf/firestore/data~2Fitems~2F${doc.id}`}>edit</a>
+        </div>
+      </div>
+    </div>
+  )
 };
 
-function Home({ error, items, filters, dispatch }) {
+const handleIncrement = (id, value) => async () => {
+  const result = await incrementItemPoints(id, value);
+  if (result.successful == false) {
+    alert("Error:" + result.value);
+  }
+}
+
+const handleDelete = (id) => async () => {
+  const result = await deleteItem(id);
+  if (result.successful == false) {
+    alert("Error:" + result.value);
+  }
+}
+
+function Home({ error, items, subjects, filters, dispatch }) {
   useEffect(() => {
-    console.log('one')
-    itemsCollection
-      .limit(100)
+    const unsubscribe = itemsCollection
+      .limit(1000)
       .orderBy('points', 'desc')
       .orderBy('created_at', 'desc')
       .onSnapshot(
         snapshot => dispatch({ type: 'ITEMS_FETCH_SUCCESS', payload: snapshot }),
         e => dispatch({ type: 'ITEMS_FETCH_ERROR', error: e })
       );
+
+    return () => unsubscribe();
   }, [filters]);
 
-  console.log(items);
-
   return (
-    <div className={styles.container}>
+    <Container text>
       <Head>
         <title>Shelf</title>
-        <link rel="icon" href="/favicon.ico" />
       </Head>
 
       <main className={styles.main}>
-        <h1 className={styles.title}>
-          Welcome to <a href="#">Shelf</a>
-        </h1>
-        <Feed items={items} error={error} />
+        <Feed items={items} subjects={subjects} error={error} />
       </main>
-    </div>
+
+      <div className="right cornerButton">
+        <a href="/add">
+          <Button color='purple' size='tiny'>Add</Button>
+        </a>
+      </div>
+    </Container>
   )
 }
 
 const mapStateToProps = state => ({
-  error: state.error,
-  items: state.itemsSnapshot,
+  error: state.itemsError && state.subjectsError,
+  items: state.items,
+  subjects: state.subjects,
   filters: null
 });
 
