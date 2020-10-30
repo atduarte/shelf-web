@@ -3,6 +3,8 @@ import Router from 'next/router'
 import { connect } from 'react-redux';
 import { Container, Header, Form, Message, Input, Dropdown, Button } from 'semantic-ui-react'
 import Head from 'next/head'
+import Link from 'next/link'
+import { createItem } from '../lib/data/items'
 
 const mapStateToProps = state => ({
     subjectsError: state.subjectsError,
@@ -16,7 +18,6 @@ export function getServerSideProps(context) {
 const status = {
     editing: 0,
     submitting: 1,
-
 }
 
 // TODO: Check field requirements
@@ -39,34 +40,22 @@ function Add({ query, subjectsError, allSubjects }) {
         value: doc.id
     }));
 
-    function handleSubmit(ev) {
+    async function handleSubmit(ev) {
         ev.preventDefault();
         setSubmitting(true);
         setError(null);
         setSubmitted(null);
 
-        fetch('/api/add', {
-            method: 'POST',
-            body: JSON.stringify({title, url, points, subjects}),
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        })
-        .then(async (res) => {
-            setSubmitting(false);
+        const result = await createItem({title, url, points, subjects: subjects || []})
+        setSubmitting(false);
 
-            if (res.status == 200) {
-                const body = await res.json();
-                setSubmitted({title, message: body.message});
-                Router.push('/');
-            } else {
-                setError("Error");
-            }
-        })
-        .catch((error) => {
-            console.log(error);
-            setError(error.message);
-        })
+        if (result.successful) {
+            setSubmitted({title, message: result.value});
+            Router.push('/');
+        } else {
+            console.log(result.value);
+            setError(result.value);
+        }
     }
 
     const handleChange = (setState) => (e, { value }) => setState(value)
@@ -130,9 +119,9 @@ function Add({ query, subjectsError, allSubjects }) {
             </main>
 
             <div className="cornerButton left">
-                <a href="/">
-                <Button color='grey' size='tiny'>Go Back</Button>
-                </a>
+                <Link href="/">
+                    <Button color='grey' size='tiny'>Go Back</Button>
+                </Link>
             </div>
             
         </Container>

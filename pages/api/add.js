@@ -1,8 +1,6 @@
 import Joi, { string } from "joi";
 import validate from "next-joi";
 
-import { createItem } from '../../lib/data/items'
-
 const schema = Joi.object({
   title: Joi.string().required(),
   url: Joi.string().uri().required(),

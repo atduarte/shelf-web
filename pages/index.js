@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import Link from 'next/link'
 import Head from 'next/head'
 import styles from '../styles/Home.module.css'
 import {extractHostname} from '../lib/utils'
@@ -82,9 +83,9 @@ function Home({ error, items, subjects, filters, dispatch }) {
       </main>
 
       <div className="right cornerButton">
-        <a href="/add">
+        <Link href="/add">
           <Button color='purple' size='tiny'>Add</Button>
-        </a>
+        </Link>
       </div>
     </Container>
   )
