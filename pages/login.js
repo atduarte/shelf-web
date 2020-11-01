@@ -7,8 +7,8 @@ import Head from 'next/head'
 // TODO: If logged in redirect to homepage
 
 function Login({ }) {
-    const [email, setEmail] = useState();
-    const [password, setPassword] = useState();
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
 
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState(null);
@@ -20,9 +20,11 @@ function Login({ }) {
 
         await auth.signInWithEmailAndPassword(email, password)
             .then(() => Router.push('/'))
-            .catch((error) => setError(error.message))
+            .catch((error) => {
+                setSubmitting(false);
+                setError(error.message)
+            })
             
-        setSubmitting(false);
     }
 
     const handleChange = (setState) => (e, { value }) => setState(value)

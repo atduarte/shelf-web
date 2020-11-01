@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link'
 import Head from 'next/head'
+import nookies from 'nookies'
+import firebaseAdmin from '../lib/server/firebaseAdmin'
 import styles from '../styles/Home.module.css'
-import isAuthenticated from '../lib/server/isAuthenticated'
 import getSubjects from '../lib/server/getSubjects'
 import {extractHostname} from '../lib/utils'
 
@@ -12,7 +13,16 @@ import { Item, Container, Button, Checkbox } from 'semantic-ui-react';
 import { subjectsCollection } from '../lib/data/subjects';
 
 
-export const getServerSideProps = isAuthenticated(async (ctx) => {
+export const getServerSideProps = async (ctx) => {
+  try {
+      const cookies = nookies.get(ctx);
+      await firebaseAdmin.auth().verifyIdToken(cookies.token);
+  } catch (err) {
+      ctx.res.writeHead(302, { Location: '/login' })
+      ctx.res.end();
+      return {props: {}};
+  }
+
   const subjects = (await getSubjects())
       .docs
       .map(doc => ({
@@ -22,7 +32,7 @@ export const getServerSideProps = isAuthenticated(async (ctx) => {
       }));
   
   return {props: {subjects}};
-});
+};
 
 
 const Feed = ({ items, subjects }) => {
@@ -68,7 +78,7 @@ const SubjectList = ({options, set}) => {
 
 const SubjectListItem = ({option, set}) => {
   return (
-    <div>
+    <div key={option.value}>
       <Checkbox
         name={option.value}
         label={option.text}

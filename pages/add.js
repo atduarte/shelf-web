@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import Router from 'next/router'
-import isAuthenticated from '../lib/server/isAuthenticated';
+import nookies from 'nookies'
+import firebaseAdmin from '../lib/server/firebaseAdmin'
 
 import { Container, Header, Form, Message, Input, Dropdown, Button } from 'semantic-ui-react'
 import Head from 'next/head'
@@ -8,7 +9,16 @@ import Link from 'next/link'
 import { createItem } from '../lib/data/items'
 import getSubjects from '../lib/server/getSubjects';
 
-export const getServerSideProps = isAuthenticated(async (ctx) => {
+export const getServerSideProps = async (ctx) => {
+    try {
+        const cookies = nookies.get(ctx);
+        await firebaseAdmin.auth().verifyIdToken(cookies.token);
+    } catch (err) {
+        ctx.res.writeHead(302, { Location: '/login' })
+        ctx.res.end();
+        return {props: {}};
+    }
+
     const subjects = (await getSubjects())
         .docs
         .map(doc => ({
@@ -21,7 +31,7 @@ export const getServerSideProps = isAuthenticated(async (ctx) => {
         query: ctx.query,
         subjectOptions: subjects
     }};
-});
+};
 
 const status = {
     editing: 0,
