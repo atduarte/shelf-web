@@ -19,7 +19,7 @@ function Login({ }) {
         setError(null);
 
         await auth.signInWithEmailAndPassword(email, password)
-            .then(() => Router.push('/test'))
+            .then(() => Router.push('/'))
             .catch((error) => setError(error.message))
             
         setSubmitting(false);
