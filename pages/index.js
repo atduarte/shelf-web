@@ -128,8 +128,8 @@ function Home({ subjects }) {
 
     const unsubscribe = baseQuery
       .limit(1000)
-      .orderBy('points', 'desc')
       .orderBy('created_at', 'desc')
+      .orderBy('points', 'desc')
       .onSnapshot(
         snapshot => {
           console.log('update')

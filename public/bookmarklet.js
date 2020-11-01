@@ -1,5 +1,5 @@
 (() => {
-    const domain = 'http://localhost:3000';
+    const domain = 'https://shelf-web.vercel.app/';
 
     const title = document.title;
 
@@ -20,12 +20,5 @@
     /*const descriptionTag = document.querySelector("meta[name='description']");
     //const description = descriptionTag ? descriptionTag.getAttribute("content") : "";*/
 
-    const wnd = window.open(`${domain}/add?title=${encodeURIComponent(title)}&url=${encodeURIComponent(url)}`);
-
-    window.addEventListener("submitted", (event) => {
-        console.log('received');
-        if (event.origin !== origin) return;
-        wnd.close();
-    }, false);
-
+    window.open(`${domain}/add?title=${encodeURIComponent(title)}&url=${encodeURIComponent(url)}`);
 })();
