@@ -1,29 +1,26 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import Router from 'next/router'
 import {auth} from '../lib/firebase'
-import { connect } from 'react-redux';
-import { Container, Header, Form, Message, Input, Dropdown, Button } from 'semantic-ui-react'
+import { Container, Header, Form, Message, Input, Button } from 'semantic-ui-react'
 import Head from 'next/head'
 
-const mapStateToProps = state => ({});
+// TODO: If logged in redirect to homepage
 
-function Login({ query, subjectsError, allSubjects }) {
-    // Form date
+function Login({ }) {
     const [email, setEmail] = useState();
     const [password, setPassword] = useState();
 
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState(null);
 
-    function handleSubmit(ev) {
+    async function handleSubmit(ev) {
         ev.preventDefault();
         setSubmitting(true);
         setError(null);
 
-        auth.signInWithEmailAndPassword(email, password)
-            .catch(function (error) {
-                setError(error.message)
-            })
+        await auth.signInWithEmailAndPassword(email, password)
+            .then(() => Router.push('/test'))
+            .catch((error) => setError(error.message))
             
         setSubmitting(false);
     }
@@ -61,4 +58,4 @@ function Login({ query, subjectsError, allSubjects }) {
     )
 }
 
-export default connect(mapStateToProps)(Login)
+export default Login

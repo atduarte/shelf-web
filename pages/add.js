@@ -1,19 +1,27 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import Router from 'next/router'
-import { connect } from 'react-redux';
+import isAuthenticated from '../lib/server/isAuthenticated';
+
 import { Container, Header, Form, Message, Input, Dropdown, Button } from 'semantic-ui-react'
 import Head from 'next/head'
 import Link from 'next/link'
 import { createItem } from '../lib/data/items'
+import getSubjects from '../lib/server/getSubjects';
 
-const mapStateToProps = state => ({
-    subjectsError: state.subjectsError,
-    allSubjects: state.subjects
+export const getServerSideProps = isAuthenticated(async (ctx) => {
+    const subjects = (await getSubjects())
+        .docs
+        .map(doc => ({
+            key: doc.id,
+            text: doc.data().name,
+            value: doc.id
+        }));
+    
+    return {props: {
+        query: ctx.query,
+        subjectOptions: subjects
+    }};
 });
-
-export function getServerSideProps(context) {
-    return {props: {query: context.query}};
-}
 
 const status = {
     editing: 0,
@@ -21,10 +29,8 @@ const status = {
 }
 
 // TODO: Check field requirements
-// TODO: Handle failure to connect
 
-function Add({ query, subjectsError, allSubjects }) {
-    // Form date
+function Add({ query, subjectOptions }) {
     const [title, setTitle] = useState(query.title || "");
     const [url, setUrl] = useState(query.url || "");
     const [points, setPoints] = useState(0);
@@ -33,12 +39,6 @@ function Add({ query, subjectsError, allSubjects }) {
     const [submitting, setSubmitting] = useState(false);
     const [submitted, setSubmitted] = useState(null);
     const [error, setError] = useState(null);
-
-    const subjectOptions = (allSubjects || {docs: []}).docs.map(doc => ({
-        key: doc.id,
-        text: doc.data().name,
-        value: doc.id
-    }));
 
     async function handleSubmit(ev) {
         ev.preventDefault();
@@ -82,12 +82,6 @@ function Add({ query, subjectsError, allSubjects }) {
                         content={`"${error}"`}
                     />
                 }
-                {subjectsError === true &&
-                    <Message
-                        error
-                        header="Couldn't load subjects"
-                    />
-                }
                 <Form onSubmit={handleSubmit} loading={submitting}>
                     <Form.Field>
                         <label>Title</label>
@@ -128,4 +122,4 @@ function Add({ query, subjectsError, allSubjects }) {
     )
 }
 
-export default connect(mapStateToProps)(Add)
+export default Add

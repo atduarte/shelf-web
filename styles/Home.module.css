@@ -1,5 +1,25 @@
 .main{
   margin-top: 3em;
+  display: flex;
+}
+
+@media (max-width: 400px) {
+  .mains {
+    display: block;
+  }
+}
+
+.subjects {
+  width: 20%;
+  opacity: 0.5;
+}
+
+.subjects:hover {
+  opacity: 1;
+}
+
+.feed {
+  width: 80%;
 }
 
 .item {

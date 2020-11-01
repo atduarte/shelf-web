@@ -1,16 +1,33 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link'
 import Head from 'next/head'
 import styles from '../styles/Home.module.css'
+import isAuthenticated from '../lib/server/isAuthenticated'
+import getSubjects from '../lib/server/getSubjects'
 import {extractHostname} from '../lib/utils'
 
 import {itemsCollection, incrementItemPoints, deleteItem} from '../lib/data/items'
 
-import { connect } from 'react-redux';
-import { Item, Container, Button } from 'semantic-ui-react';
+import { Item, Container, Button, Checkbox } from 'semantic-ui-react';
+import { subjectsCollection } from '../lib/data/subjects';
+
+
+export const getServerSideProps = isAuthenticated(async (ctx) => {
+  const subjects = (await getSubjects())
+      .docs
+      .map(doc => ({
+          key: doc.id,
+          text: doc.data().name,
+          value: doc.id
+      }));
+  
+  return {props: {subjects}};
+});
+
 
 const Feed = ({ items, subjects }) => {
   if (!items) return <h3>Loading...</h3>;
+  if (items.docs.length == 0) return <h3>No items</h3>;
 
   return (
     <Item.Group>
@@ -21,7 +38,8 @@ const Feed = ({ items, subjects }) => {
 
 const FeedItem = ({ doc, subjects }) => {
   const data = doc.data();
-  const processedSubjects = (subjects || {docs: []}).docs.filter((doc) => data.subjects.map(s => s.id).includes(doc.id));
+  const filteredSubjects =  subjects
+    .filter((subject) => data.subjects.map(s => s.id).includes(subject.value));
 
   return (
     <div className={styles.item} dbid={doc.id}>
@@ -36,13 +54,30 @@ const FeedItem = ({ doc, subjects }) => {
           <img className={styles.trash} src="/trash.svg" onClick={handleDelete(doc.id)} />
         </div>
         <div className={styles.itemMeta}>
-          {processedSubjects.map(doc => <div className={styles.itemSubject}>{doc.data().name}</div>)}
+          {filteredSubjects.map(({text}) => <div className={styles.itemSubject}>{text}</div>)}
           {extractHostname(data.url)} — <a target="_blank" href={`https://console.firebase.google.com/u/0/project/andreduarte-shelf/firestore/data~2Fitems~2F${doc.id}`}>edit</a>
         </div>
       </div>
     </div>
   )
 };
+
+const SubjectList = ({options, set}) => {
+  return options.map(option => <SubjectListItem key={option.value} option={option} set={set}/>)
+}
+
+const SubjectListItem = ({option, set}) => {
+  return (
+    <div>
+      <Checkbox
+        name={option.value}
+        label={option.text}
+        checked={option.checked}
+        onChange={set}
+      />
+    </div>
+  )
+}
 
 const handleIncrement = (id, value) => async () => {
   const result = await incrementItemPoints(id, value);
@@ -58,28 +93,60 @@ const handleDelete = (id) => async () => {
   }
 }
 
-function Home({ error, items, subjects, filters, dispatch }) {
+function Home({ subjects }) {
+  const [items, setItems] = useState(null);
+  const [error, setError] = useState(null);
+  const [selected, setSelected] = useState({});
+
+  const handleSubjectSelection = (ev, {name, checked}) => {
+    setSelected({...selected, [name]: checked})
+  }
+
   useEffect(() => {
-    const unsubscribe = itemsCollection
+    setError(null);
+    setItems(null);
+
+    const baseQuery = Object.values(selected).includes(true) ?
+      itemsCollection.where(
+        'subjects', 
+        'array-contains-any', 
+        Object.entries(selected)
+          .filter(([_, checked]) => checked)
+          .map(([name, _]) => subjectsCollection.doc(name))
+      ) :
+      itemsCollection;
+
+    const unsubscribe = baseQuery
       .limit(1000)
       .orderBy('points', 'desc')
       .orderBy('created_at', 'desc')
       .onSnapshot(
-        snapshot => dispatch({ type: 'ITEMS_FETCH_SUCCESS', payload: snapshot }),
-        e => dispatch({ type: 'ITEMS_FETCH_ERROR', error: e })
+        snapshot => {
+          console.log('update')
+          setItems(snapshot)
+        },
+        e => setError(e)
       );
 
     return () => unsubscribe();
-  }, [filters]);
+  }, [selected]);
 
   return (
-    <Container text>
+    <Container>
       <Head>
         <title>Shelf</title>
       </Head>
 
       <main className={styles.main}>
-        <Feed items={items} subjects={subjects} error={error} />
+        <div className={styles.feed}>
+          <Feed items={items} subjects={subjects} error={error} />
+        </div>
+        <div className={styles.subjects}>
+          <SubjectList 
+              options={subjects.map(s => ({...s, checked: selected[s.value]}))} 
+              set={handleSubjectSelection}
+            />
+        </div>
       </main>
 
       <div className="right cornerButton">
@@ -91,11 +158,4 @@ function Home({ error, items, subjects, filters, dispatch }) {
   )
 }
 
-const mapStateToProps = state => ({
-  error: state.itemsError && state.subjectsError,
-  items: state.items,
-  subjects: state.subjects,
-  filters: null
-});
-
-export default connect(mapStateToProps)(Home)
+export default Home
