@@ -61,7 +61,6 @@ function Add({ query, subjectOptions }) {
 
         if (result.successful) {
             setSubmitted({title, message: result.value});
-            Router.push('/');
         } else {
             console.log(result.value);
             setError(result.value);
@@ -92,34 +91,37 @@ function Add({ query, subjectOptions }) {
                         content={`"${error}"`}
                     />
                 }
-                <Form onSubmit={handleSubmit} loading={submitting}>
-                    <Form.Field>
-                        <label>Title</label>
-                        <Input value={title} onChange={handleChange(setTitle)} />
-                    </Form.Field>
-                    <Form.Field>
-                        <label>URL</label>
-                        <Input value={url} onChange={handleChange(setUrl)} />
-                    </Form.Field>
-                    <Form.Field>
-                        <label>Subjects</label>
-                        <Dropdown
-                            fluid
-                            multiple
-                            search
-                            selection
-                            loading={false}
-                            options={subjectOptions}
-                            onChange={handleChange(setSubjects)}
-                            value={subjects}
-                        />
-                    </Form.Field>
-                    <Form.Field>
-                        <label>Points</label>
-                        <Input type="number" value={points} onChange={handleChange(setPoints)} />
-                    </Form.Field>
-                    <Button type='submit' color='purple' floated="right">Submit</Button>
-                </Form>
+                {submitted == null && 
+                    <Form onSubmit={handleSubmit} loading={submitting}>
+                        <Form.Field>
+                            <label>Title</label>
+                            <Input value={title} onChange={handleChange(setTitle)} />
+                        </Form.Field>
+                        <Form.Field>
+                            <label>URL</label>
+                            <Input value={url} onChange={handleChange(setUrl)} />
+                        </Form.Field>
+                        <Form.Field>
+                            <label>Subjects</label>
+                            <Dropdown
+                                fluid
+                                multiple
+                                search
+                                selection
+                                loading={false}
+                                options={subjectOptions}
+                                onChange={handleChange(setSubjects)}
+                                value={subjects}
+                            />
+                        </Form.Field>
+                        <Form.Field>
+                            <label>Points</label>
+                            <Input type="number" value={points} onChange={handleChange(setPoints)} />
+                        </Form.Field>
+                        <Button type='submit' color='purple' floated="right">Submit</Button>
+                    </Form>
+                }
+                
             </main>
 
             <div className="cornerButton left">

@@ -20,5 +20,9 @@
     /*const descriptionTag = document.querySelector("meta[name='description']");
     //const description = descriptionTag ? descriptionTag.getAttribute("content") : "";*/
 
-    window.open(`${domain}/add?title=${encodeURIComponent(title)}&url=${encodeURIComponent(url)}`);
+    window.open(
+        `${domain}/add?title=${encodeURIComponent(title)}&url=${encodeURIComponent(url)}`,
+        '_blank',
+        'menubar=no,height=720,width=600,toolbar=no,scrollbars=yes,status=no,dialog=1'
+    );
 })();
