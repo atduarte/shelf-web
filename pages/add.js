@@ -41,6 +41,7 @@ const status = {
 // TODO: Check field requirements
 
 function Add({ query, subjectOptions }) {
+    const isBookmarklet = query.bookmarklet == "1";
     const [title, setTitle] = useState(query.title || "");
     const [url, setUrl] = useState(query.url || "");
     const [points, setPoints] = useState(0);
@@ -72,7 +73,7 @@ function Add({ query, subjectOptions }) {
     return (
         <Container text style={{marginTop: '3em'}}>
             <Head>
-                <title>Add — Shelf</title>
+                <title>Add to Shelf</title>
             </Head>
 
             <main>
@@ -91,7 +92,7 @@ function Add({ query, subjectOptions }) {
                         content={`"${error}"`}
                     />
                 }
-                {submitted == null && 
+                {(submitted == null || isBookmarklet == false) && 
                     <Form onSubmit={handleSubmit} loading={submitting}>
                         <Form.Field>
                             <label>Title</label>
@@ -124,11 +125,13 @@ function Add({ query, subjectOptions }) {
                 
             </main>
 
-            <div className="cornerButton left">
-                <Link href="/">
-                    <Button color='grey' size='tiny'>Go Back</Button>
-                </Link>
-            </div>
+            {isBookmarklet == false &&
+                <div className="cornerButton left">
+                    <Link href="/">
+                        <Button color='grey' size='tiny'>Go Back</Button>
+                    </Link>
+                </div>
+            }
             
         </Container>
     )
